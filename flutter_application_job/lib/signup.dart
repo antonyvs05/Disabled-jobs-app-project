@@ -1,41 +1,24 @@
 import 'package:flutter/material.dart';
-import 'signup.dart';
 
-void main() {
-  runApp(const MainApp());
-}
-
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const LoginSignUpPage(),
-    );
-  }
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class LoginSignUpPage extends StatefulWidget {
-  const LoginSignUpPage({super.key});
-
-  @override
-  State<LoginSignUpPage> createState() => _LoginSignUpPageState();
-}
-
-class _LoginSignUpPageState extends State<LoginSignUpPage> {
+class _SignUpPageState extends State<SignUpPage> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -83,7 +66,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                   const SizedBox(height: 30),
                   
                   const Text(
-                    'Welcome Back!',
+                    'Create Account',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -92,7 +75,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Sign in to continue',
+                    'Sign up to get started',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.8),
@@ -100,7 +83,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Login Form Card
+                  // SignUp Form Card
                   Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
@@ -110,6 +93,19 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
+                          // Name TextField
+                          TextField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Full Name',
+                              prefixIcon: const Icon(Icons.person),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
                           // Email TextField
                           TextField(
                             controller: _emailController,
@@ -136,16 +132,32 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Confirm Password TextField
+                          TextField(
+                            controller: _confirmPasswordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Confirm Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24),
 
-                          // Login Button
+                          // Sign Up Button
                           SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Handle login
-                                print('Login: ${_emailController.text}');
+                                // Handle sign up
+                                print('Sign Up: ${_emailController.text}');
+                                // After successful signup, navigate back to login
+                                Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade800,
@@ -155,26 +167,11 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                                 ),
                               ),
                               child: const Text(
-                                'Login',
+                                'Sign Up',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
-                              ),
-                            ),
-                          ),
-
-                          // Forgot Password
-                          const SizedBox(height: 12),
-                          TextButton(
-                            onPressed: () {
-                              // Handle forgot password
-                              print('Forgot password');
-                            },
-                            child: Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                color: Colors.blue.shade800,
                               ),
                             ),
                           ),
@@ -185,25 +182,20 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
 
                   const SizedBox(height: 20),
 
-                  // Navigate to Sign Up
+                  // Back to Login
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        "Don't have an account? ",
+                        "Already have an account? ",
                         style: TextStyle(color: Colors.white),
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignUpPage(),
-                            ),
-                          );
+                          Navigator.pop(context);
                         },
                         child: const Text(
-                          'Sign Up',
+                          'Login',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
