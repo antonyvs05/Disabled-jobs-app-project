@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'models/user_model.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -12,6 +13,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  UserRole _selectedRole = UserRole.job_seeker;
 
   @override
   void dispose() {
@@ -20,6 +22,30 @@ class _SignUpPageState extends State<SignUpPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _handleSignUp() {
+    // Validation
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Account created successfully!')),
+    );
+    Navigator.pop(context);
   }
 
   @override
@@ -120,6 +146,34 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                           const SizedBox(height: 16),
 
+                          // Role Dropdown
+                          DropdownButtonFormField<UserRole>(
+                            value: _selectedRole,
+                            decoration: InputDecoration(
+                              labelText: 'I am a',
+                              prefixIcon: const Icon(Icons.badge),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: UserRole.job_seeker,
+                                child: Text('Job Seeker'),
+                              ),
+                              DropdownMenuItem(
+                                value: UserRole.employer,
+                                child: Text('Employer'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedRole = value!;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
                           // Password TextField
                           TextField(
                             controller: _passwordController,
@@ -153,12 +207,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Handle sign up
-                                print('Sign Up: ${_emailController.text}');
-                                // After successful signup, navigate back to login
-                                Navigator.pop(context);
-                              },
+                              onPressed: _handleSignUp,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade800,
                                 foregroundColor: Colors.white,
