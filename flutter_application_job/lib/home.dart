@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -22,168 +29,25 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
             onPressed: () {
-              // Handle profile
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Welcome Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.blue.shade800,
-                  Colors.blue.shade600,
-                ],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Welcome Back!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Find your dream job today',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Search Bar
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search for jobs...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Main Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Categories Section
-                  const Text(
-                    'Job Categories',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 100,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _buildCategoryCard('Technology', Icons.computer, Colors.blue),
-                        _buildCategoryCard('Healthcare', Icons.local_hospital, Colors.red),
-                        _buildCategoryCard('Education', Icons.school, Colors.green),
-                        _buildCategoryCard('Business', Icons.business, Colors.orange),
-                        _buildCategoryCard('Arts', Icons.palette, Colors.purple),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Featured Jobs Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Featured Jobs',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // View all jobs
-                        },
-                        child: const Text('See All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Job Cards
-                  _buildJobCard(
-                    'Software Developer',
-                    'Tech Solutions Inc.',
-                    'Remote',
-                    '\$60,000 - \$80,000',
-                    Icons.computer,
-                    Colors.blue,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildJobCard(
-                    'Customer Service Rep',
-                    'Service Plus Co.',
-                    'Hybrid',
-                    '\$35,000 - \$45,000',
-                    Icons.support_agent,
-                    Colors.green,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildJobCard(
-                    'Graphic Designer',
-                    'Creative Studio',
-                    'On-site',
-                    '\$40,000 - \$55,000',
-                    Icons.design_services,
-                    Colors.purple,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: _currentIndex == 0 ? _buildHomeContent() : const ProfilePage(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue.shade800,
         unselectedItemColor: Colors.grey,
-        currentIndex: 0,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -203,6 +67,161 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHomeContent() {
+    return Column(
+      children: [
+        // Welcome Section
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.blue.shade800,
+                Colors.blue.shade600,
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Welcome Back!',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Find your dream job today',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Search Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search for jobs...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Main Content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Categories Section
+                const Text(
+                  'Job Categories',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 100,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildCategoryCard('Technology', Icons.computer, Colors.blue),
+                      _buildCategoryCard('Healthcare', Icons.local_hospital, Colors.red),
+                      _buildCategoryCard('Education', Icons.school, Colors.green),
+                      _buildCategoryCard('Business', Icons.business, Colors.orange),
+                      _buildCategoryCard('Arts', Icons.palette, Colors.purple),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Featured Jobs Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Featured Jobs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // View all jobs
+                      },
+                      child: const Text('See All'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Job Cards
+                _buildJobCard(
+                  'Software Developer',
+                  'Tech Solutions Inc.',
+                  'Remote',
+                  '\$60,000 - \$80,000',
+                  Icons.computer,
+                  Colors.blue,
+                ),
+                const SizedBox(height: 12),
+                _buildJobCard(
+                  'Customer Service Rep',
+                  'Service Plus Co.',
+                  'Hybrid',
+                  '\$35,000 - \$45,000',
+                  Icons.support_agent,
+                  Colors.green,
+                ),
+                const SizedBox(height: 12),
+                _buildJobCard(
+                  'Graphic Designer',
+                  'Creative Studio',
+                  'On-site',
+                  '\$40,000 - \$55,000',
+                  Icons.design_services,
+                  Colors.purple,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
