@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "118460237819",
+    "project_id": "disabled-jobs",
+    "storage_bucket": "disabled-jobs.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:118460237819:android:b02a3bfc942fec7dde2d5e",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_job"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9EN7dUZOe1j0V50zoz8bgXxn_DoA6JOE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
