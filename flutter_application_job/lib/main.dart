@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup.dart';
+import 'home.dart';
 
 void main() {
   runApp(const MainApp());
@@ -144,8 +145,13 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                             height: 50,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Handle login
-                                print('Login: ${_emailController.text}');
+                                // Navigate to home page
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const HomePage(),
+                                  ),
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade800,
