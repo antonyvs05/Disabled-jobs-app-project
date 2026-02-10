@@ -15,8 +15,14 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Job Finder'),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text(
+          'Access Work',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2C3E50),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -40,8 +46,9 @@ class _HomePageState extends State<HomePage> {
       body: _currentIndex == 0 ? _buildHomeContent() : const ProfilePage(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue.shade800,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: const Color(0xFF3498DB),
+        unselectedItemColor: Colors.grey.shade600,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -77,13 +84,13 @@ class _HomePageState extends State<HomePage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.blue.shade800,
-                Colors.blue.shade600,
+                Color(0xFF2C3E50),
+                Color(0xFF34495E),
               ],
             ),
           ),
@@ -91,19 +98,22 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Welcome Back!',
+                'Welcome Back',
                 style: TextStyle(
                   fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
+                  letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Find your dream job today',
+                'Discover inclusive job opportunities',
                 style: TextStyle(
                   fontSize: 16,
+                  fontWeight: FontWeight.w400,
                   color: Colors.white.withOpacity(0.9),
+                  letterSpacing: 0.2,
                 ),
               ),
               const SizedBox(height: 20),
