@@ -43,8 +43,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2C3E50),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -95,13 +101,13 @@ class _ProfilePageState extends State<ProfilePage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.blue.shade800,
-                    Colors.blue.shade600,
+                    Color(0xFF2C3E50),
+                    Color(0xFF34495E),
                   ],
                 ),
               ),
@@ -114,13 +120,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 3),
                     ),
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.white,
                       child: Icon(
                         Icons.person,
                         size: 50,
-                        color: Colors.blue.shade800,
+                        color: Color(0xFF3498DB),
                       ),
                     ),
                   ),
@@ -213,8 +219,11 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: currentUser.skills.map((skill) {
                                 return Chip(
                                   label: Text(skill),
-                                  backgroundColor: Colors.blue.shade50,
-                                  labelStyle: TextStyle(color: Colors.blue.shade800),
+                                  backgroundColor: const Color(0xFFE8F4F8),
+                                  labelStyle: const TextStyle(
+                                    color: Color(0xFF2C3E50),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 );
                               }).toList(),
                             ),
@@ -236,12 +245,12 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: currentUser.functionalNeeds.map((need) {
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
+                                    child: Row(
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.accessible,
                                         size: 20,
-                                        color: Colors.blue.shade800,
+                                        color: Color(0xFF3498DB),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -333,7 +342,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blue.shade800),
+      leading: Icon(icon, color: const Color(0xFF3498DB)),
       title: Text(
         label,
         style: TextStyle(

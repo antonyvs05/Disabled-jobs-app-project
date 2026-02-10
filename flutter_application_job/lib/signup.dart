@@ -52,13 +52,13 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.blue.shade400,
-              Colors.blue.shade800,
+              Color(0xFF34495E),
+              Color(0xFF2C3E50),
             ],
           ),
         ),
@@ -77,34 +77,37 @@ class _SignUpPageState extends State<SignUpPage> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 20,
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.work,
+                    child: const Icon(
+                      Icons.accessible_forward,
                       size: 60,
-                      color: Colors.blue.shade800,
+                      color: Color(0xFF3498DB),
                     ),
                   ),
                   const SizedBox(height: 30),
                   
                   const Text(
-                    'Create Account',
+                    'Join Access Work',
                     style: TextStyle(
                       fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Sign up to get started',
+                    'Create your account today',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.8),
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withOpacity(0.9),
+                      letterSpacing: 0.2,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -209,8 +212,9 @@ class _SignUpPageState extends State<SignUpPage> {
                             child: ElevatedButton(
                               onPressed: _handleSignUp,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade800,
+                                backgroundColor: const Color(0xFF3498DB),
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -218,8 +222,9 @@ class _SignUpPageState extends State<SignUpPage> {
                               child: const Text(
                                 'Sign Up',
                                 style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),

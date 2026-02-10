@@ -16,9 +16,38 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Access Work',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: const Color(0xFF2C3E50),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2C3E50),
+          primary: const Color(0xFF2C3E50),
+          secondary: const Color(0xFF3498DB),
+        ),
         useMaterial3: true,
+        fontFamily: 'Roboto',
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+          headlineMedium: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+          bodyLarge: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.15,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.25,
+          ),
+        ),
       ),
       home: const LoginSignUpPage(),
     );
@@ -47,13 +76,13 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.blue.shade400,
-              Colors.blue.shade800,
+              Color(0xFF34495E),
+              Color(0xFF2C3E50),
             ],
           ),
         ),
@@ -72,34 +101,37 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 20,
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.work,
+                    child: const Icon(
+                      Icons.accessible_forward,
                       size: 60,
-                      color: Colors.blue.shade800,
+                      color: Color(0xFF3498DB),
                     ),
                   ),
                   const SizedBox(height: 30),
                   
                   const Text(
-                    'Welcome Back!',
+                    'Access Work',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Sign in to continue',
+                    'Empowering inclusive employment',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.8),
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withOpacity(0.9),
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -157,8 +189,9 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade800,
+                                backgroundColor: const Color(0xFF3498DB),
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -166,8 +199,9 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                               child: const Text(
                                 'Login',
                                 style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
@@ -180,10 +214,11 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                               // Handle forgot password
                               print('Forgot password');
                             },
-                            child: Text(
+                            child: const Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                color: Colors.blue.shade800,
+                                color: Color(0xFF3498DB),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
@@ -246,8 +281,14 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Job Finder'),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text(
+          'Access Work',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2C3E50),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -271,8 +312,9 @@ class _HomePageState extends State<HomePage> {
       body: _currentIndex == 0 ? _buildHomeContent() : const ProfilePage(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue.shade800,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: const Color(0xFF3498DB),
+        unselectedItemColor: Colors.grey.shade600,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -308,13 +350,13 @@ class _HomePageState extends State<HomePage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.blue.shade800,
-                Colors.blue.shade600,
+                Color(0xFF2C3E50),
+                Color(0xFF34495E),
               ],
             ),
           ),
@@ -322,19 +364,22 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Welcome Back!',
+                'Welcome Back',
                 style: TextStyle(
                   fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
+                  letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Find your dream job today',
+                'Discover inclusive job opportunities',
                 style: TextStyle(
                   fontSize: 16,
+                  fontWeight: FontWeight.w400,
                   color: Colors.white.withOpacity(0.9),
+                  letterSpacing: 0.2,
                 ),
               ),
               const SizedBox(height: 20),
