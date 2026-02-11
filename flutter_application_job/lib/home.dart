@@ -157,7 +157,7 @@ class _HomePageState extends State<HomePage> {
                 ListTile(
                   leading: const Icon(Icons.video_call, color: Color(0xFF3498DB)),
                   title: const Text('Create a meeting'),
-                  subtitle: const Text('Start a new session with an employer'),
+                  subtitle: const Text('Start a new session'),
                   onTap: () {
                     Navigator.pop(context);
                   },
