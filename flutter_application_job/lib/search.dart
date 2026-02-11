@@ -1,5 +1,31 @@
 import 'package:flutter/material.dart';
 
+enum _LocationType { remote, hybrid, onSite }
+
+enum _EmploymentType { fullTime, partTime }
+
+class _Job {
+  final String title;
+  final String company;
+  final _LocationType locationType;
+  final _EmploymentType employmentType;
+  final bool accessible;
+  final String salary;
+  final IconData icon;
+  final Color color;
+
+  const _Job({
+    required this.title,
+    required this.company,
+    required this.locationType,
+    required this.employmentType,
+    required this.accessible,
+    required this.salary,
+    required this.icon,
+    required this.color,
+  });
+}
+
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -12,6 +38,59 @@ class _SearchPageState extends State<SearchPage> {
   String _searchQuery = '';
   List<String> _filters = [];
 
+  final List<_Job> _allJobs = const [
+    _Job(
+      title: 'Software Engineer',
+      company: 'Tech Innovators Inc.',
+      locationType: _LocationType.remote,
+      employmentType: _EmploymentType.fullTime,
+      accessible: true,
+      salary: '\$70,000 - \$90,000',
+      icon: Icons.code,
+      color: Color(0xFF3498DB),
+    ),
+    _Job(
+      title: 'Data Analyst',
+      company: 'Analytics Pro',
+      locationType: _LocationType.hybrid,
+      employmentType: _EmploymentType.fullTime,
+      accessible: true,
+      salary: '\$55,000 - \$70,000',
+      icon: Icons.analytics,
+      color: Color(0xFF27AE60),
+    ),
+    _Job(
+      title: 'UX Designer',
+      company: 'Design Masters',
+      locationType: _LocationType.onSite,
+      employmentType: _EmploymentType.fullTime,
+      accessible: false,
+      salary: '\$60,000 - \$75,000',
+      icon: Icons.design_services,
+      color: Color(0xFF9B59B6),
+    ),
+    _Job(
+      title: 'Customer Support Rep',
+      company: 'Service Plus Co.',
+      locationType: _LocationType.hybrid,
+      employmentType: _EmploymentType.partTime,
+      accessible: true,
+      salary: '\$35,000 - \$45,000',
+      icon: Icons.support_agent,
+      color: Color(0xFF2ECC71),
+    ),
+    _Job(
+      title: 'QA Tester',
+      company: 'Quality Labs',
+      locationType: _LocationType.remote,
+      employmentType: _EmploymentType.partTime,
+      accessible: true,
+      salary: '\$40,000 - \$55,000',
+      icon: Icons.bug_report,
+      color: Color(0xFFE67E22),
+    ),
+  ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -20,6 +99,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredJobs = _filteredJobs();
     return Scaffold(
       body: Column(
         children: [
@@ -131,7 +211,7 @@ class _SearchPageState extends State<SearchPage> {
           Expanded(
             child: _searchQuery.isEmpty && _filters.isEmpty
                 ? _buildEmptyState()
-                : _buildSearchResults(),
+                : _buildSearchResults(filteredJobs),
           ),
         ],
       ),
@@ -204,12 +284,12 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildSearchResults() {
+  Widget _buildSearchResults(List<_Job> jobs) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Search Results',
+          'Search Results (${jobs.length})',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -217,34 +297,124 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildJobCard(
-          'Software Engineer',
-          'Tech Innovators Inc.',
-          'Remote',
-          '\$70,000 - \$90,000',
-          Icons.code,
-          const Color(0xFF3498DB),
-        ),
-        const SizedBox(height: 12),
-        _buildJobCard(
-          'Data Analyst',
-          'Analytics Pro',
-          'Hybrid',
-          '\$55,000 - \$70,000',
-          Icons.analytics,
-          const Color(0xFF27AE60),
-        ),
-        const SizedBox(height: 12),
-        _buildJobCard(
-          'UX Designer',
-          'Design Masters',
-          'On-site',
-          '\$60,000 - \$75,000',
-          Icons.design_services,
-          const Color(0xFF9B59B6),
-        ),
+        if (jobs.isEmpty)
+          _buildNoResults()
+        else
+          ...jobs.expand((job) => [
+                _buildJobCard(
+                  job.title,
+                  job.company,
+                  _formatLocation(job.locationType),
+                  job.salary,
+                  job.icon,
+                  job.color,
+                ),
+                const SizedBox(height: 12),
+              ]),
       ],
     );
+  }
+
+  Widget _buildNoResults() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 32),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: Colors.grey.shade300,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No matches found',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Try different keywords or remove filters',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_Job> _filteredJobs() {
+    final query = _searchQuery.trim();
+    return _allJobs.where((job) {
+      final matchesQuery = _matchesQuery(job, query);
+      final matchesFilters = _matchesFilters(job);
+      return matchesQuery && matchesFilters;
+    }).toList();
+  }
+
+  bool _matchesFilters(_Job job) {
+    for (final filter in _filters) {
+      switch (filter) {
+        case 'Remote':
+          if (job.locationType != _LocationType.remote) return false;
+          break;
+        case 'Hybrid':
+          if (job.locationType != _LocationType.hybrid) return false;
+          break;
+        case 'Full-time':
+          if (job.employmentType != _EmploymentType.fullTime) return false;
+          break;
+        case 'Part-time':
+          if (job.employmentType != _EmploymentType.partTime) return false;
+          break;
+        case 'Accessible':
+          if (!job.accessible) return false;
+          break;
+      }
+    }
+    return true;
+  }
+
+  bool _matchesQuery(_Job job, String query) {
+    if (query.isEmpty) return true;
+    final haystack = '${job.title} ${job.company} ${_formatLocation(job.locationType)}'
+        .toLowerCase();
+    final normalized = query.toLowerCase().trim();
+
+    if (haystack.contains(normalized)) return true;
+
+    final tokens = normalized.split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+    if (tokens.isEmpty) return true;
+    final allTokensMatch = tokens.every((token) => haystack.contains(token));
+    if (allTokensMatch) return true;
+
+    return _isSubsequenceMatch(normalized.replaceAll(' ', ''), haystack);
+  }
+
+  bool _isSubsequenceMatch(String needle, String haystack) {
+    if (needle.isEmpty) return true;
+    var i = 0;
+    for (var j = 0; j < haystack.length && i < needle.length; j++) {
+      if (haystack[j] == needle[i]) {
+        i++;
+      }
+    }
+    return i == needle.length;
+  }
+
+  String _formatLocation(_LocationType type) {
+    switch (type) {
+      case _LocationType.remote:
+        return 'Remote';
+      case _LocationType.hybrid:
+        return 'Hybrid';
+      case _LocationType.onSite:
+        return 'On-site';
+    }
   }
 
   Widget _buildJobCard(
