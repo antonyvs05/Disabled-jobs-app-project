@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/user_model.dart';
+import 'edit_profile.dart';
+import 'settings.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -57,7 +59,10 @@ class _ProfilePageState extends State<ProfilePage> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              _showEditProfileDialog();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditProfilePage()),
+              );
             },
           ),
           PopupMenuButton<String>(
@@ -66,7 +71,10 @@ class _ProfilePageState extends State<ProfilePage> {
               if (value == 'logout') {
                 _handleLogout();
               } else if (value == 'settings') {
-                _showSettingsDialog();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -363,38 +371,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  void _showEditProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: const Text('Profile editing feature coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettingsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Settings'),
-        content: const Text('Settings page coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _handleLogout() {
