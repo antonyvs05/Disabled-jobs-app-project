@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'models/user_model.dart';
 import 'edit_profile.dart';
 import 'settings.dart';
+import 'services/firebase_service.dart';
+import 'main.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -11,38 +14,67 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Mock user data
   late User currentUser;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with mock data
-    currentUser = User(
-      id: '1',
-      email: 'user@example.com',
-      role: UserRole.job_seeker,
-      skills: ['Flutter', 'Dart', 'UI/UX Design'],
-      preferences: {
-        'remote_work': true,
-        'flexible_hours': true,
-        'salary_range': '40000-60000',
-      },
-      functionalNeeds: [
-        'Screen Reader Support',
-        'Flexible Working Hours',
-        'Remote Work Options',
-      ],
-      createdAt: DateTime.now().subtract(const Duration(days: 30)),
-      name: 'John Doe',
-      phone: '+1234567890',
-      location: 'New York, NY',
-      bio: 'Experienced developer looking for accessible workplace opportunities.',
-    );
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final currentAuth = auth.FirebaseAuth.instance.currentUser;
+      if (currentAuth == null) {
+        setState(() {
+          _errorMessage = 'No user logged in';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final user = await FirebaseService().getUser(currentAuth.uid);
+      if (user != null) {
+        setState(() {
+          currentUser = user;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'User data not found';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading user data: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null || !mounted) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Profile'),
+          backgroundColor: const Color(0xFF2C3E50),
+        ),
+        body: Center(
+          child: Text(_errorMessage ?? 'Unknown error'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -385,9 +417,25 @@ class _ProfilePageState extends State<ProfilePage> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context); // Close dialog
-              Navigator.popUntil(context, (route) => route.isFirst); // Go back to login
+              try {
+                // Sign out from Firebase Auth (kills session)
+                await auth.FirebaseAuth.instance.signOut();
+                
+                if (mounted) {
+                  // Navigate back to login
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginSignUpPage()),
+                    (route) => false,
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logout error: $e')),
+                );
+              }
             },
             child: const Text(
               'Logout',
