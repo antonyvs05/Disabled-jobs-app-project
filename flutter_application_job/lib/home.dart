@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
-            onPressed: () {
+            onPressed: _currentIndex == 3 ? null : () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfilePage()),
