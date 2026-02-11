@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'services/firebase_service.dart';
+import 'models/job_model.dart';
 import 'profile.dart';
 import 'search.dart';
 import 'saved.dart';
@@ -266,32 +269,50 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 12),
 
-                // Job Cards
-                _buildJobCard(
-                  'Software Developer',
-                  'Tech Solutions Inc.',
-                  'Remote',
-                  '\$60,000 - \$80,000',
-                  Icons.computer,
-                  Colors.blue,
-                ),
-                const SizedBox(height: 12),
-                _buildJobCard(
-                  'Customer Service Rep',
-                  'Service Plus Co.',
-                  'Hybrid',
-                  '\$35,000 - \$45,000',
-                  Icons.support_agent,
-                  Colors.green,
-                ),
-                const SizedBox(height: 12),
-                _buildJobCard(
-                  'Graphic Designer',
-                  'Creative Studio',
-                  'On-site',
-                  '\$40,000 - \$55,000',
-                  Icons.design_services,
-                  Colors.purple,
+                // Job Cards from Database
+                StreamBuilder<List<Job>>(
+                  stream: FirebaseService().getAllJobs(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final jobs = snapshot.data ?? [];
+                    final featuredJobs = jobs.take(3).toList();
+
+                    if (featuredJobs.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No jobs available',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: featuredJobs.expand((job) {
+                        final icon = job.remote ? Icons.home_outlined : Icons.business_outlined;
+                        final color = job.remote ? Colors.blue : Colors.green;
+                        
+                        return [
+                          _buildJobCard(
+                            job.id,
+                            job.title,
+                            job.company ?? 'Company',
+                            job.location ?? (job.remote ? 'Remote' : 'On-site'),
+                            job.salary ?? 'Negotiable',
+                            icon,
+                            color,
+                          ),
+                          const SizedBox(height: 12),
+                        ];
+                      }).toList(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -329,6 +350,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildJobCard(
+    String jobId,
     String title,
     String company,
     String location,
@@ -336,6 +358,8 @@ class _HomePageState extends State<HomePage> {
     IconData icon,
     Color color,
   ) {
+    // Create a simple Job object for saving functionality
+    // We'll use the jobId as a pseudo-ID for home page featured jobs
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -374,47 +398,155 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 4,
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: Colors.grey.shade600,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              location,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        location,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.attach_money,
-                        size: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                      Text(
-                        salary,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.attach_money,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          Flexible(
+                            child: Text(
+                              salary,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.bookmark_outline,
-              color: Colors.grey.shade400,
-            ),
+            _buildHomePageSaveButton(jobId),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildHomePageSaveButton(String jobId) {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    
+    if (currentUser == null) {
+      return Icon(Icons.bookmark_outline, color: Colors.grey.shade400);
+    }
+
+    return _SaveButtonWidget(
+      key: ValueKey('$currentUser-$jobId'),
+      userId: currentUser.uid,
+      jobId: jobId,
+    );
+  }
+}
+
+class _SaveButtonWidget extends StatefulWidget {
+  final String userId;
+  final String jobId;
+
+  const _SaveButtonWidget({required this.userId, required this.jobId, super.key});
+
+  @override
+  State<_SaveButtonWidget> createState() => _SaveButtonWidgetState();
+}
+
+class _SaveButtonWidgetState extends State<_SaveButtonWidget> with WidgetsBindingObserver {
+  bool _isSaved = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadSavedStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadSavedStatus();
+    }
+  }
+
+  Future<void> _loadSavedStatus() async {
+    final saved = await FirebaseService().isJobSaved(widget.userId, widget.jobId);
+    if (mounted) {
+      setState(() {
+        _isSaved = saved;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        _isSaved ? Icons.bookmark : Icons.bookmark_outline,
+        color: _isSaved ? const Color(0xFF3498DB) : Colors.grey.shade400,
+      ),
+      onPressed: _isLoading ? null : () async {
+        setState(() {
+          _isLoading = true;
+        });
+        
+        try {
+          if (_isSaved) {
+            await FirebaseService().removeSavedJob(widget.userId, widget.jobId);
+          } else {
+            await FirebaseService().saveJob(widget.userId, widget.jobId);
+          }
+          
+          if (mounted) {
+            setState(() {
+              _isSaved = !_isSaved;
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          print('Error toggling saved job: $e');
+        }
+      },
+    );
+  }
 }

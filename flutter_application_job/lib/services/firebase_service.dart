@@ -16,6 +16,7 @@ class FirebaseService {
   CollectionReference get usersCollection => _firestore.collection('users');
   CollectionReference get jobsCollection => _firestore.collection('jobs');
   CollectionReference get applicationsCollection => _firestore.collection('applications');
+  CollectionReference get savedJobsCollection => _firestore.collection('saved_jobs');
 
   // Auth Methods
   Future<auth.User?> signUp(String email, String password) async {
@@ -303,5 +304,59 @@ class FirebaseService {
       print('Error seeding sample jobs: $e');
       rethrow;
     }
+  }
+
+  // Saved Jobs Methods
+  Future<void> saveJob(String userId, String jobId) async {
+    try {
+      await savedJobsCollection.doc('${userId}_$jobId').set({
+        'user_id': userId,
+        'job_id': jobId,
+        'saved_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print('Error saving job: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeSavedJob(String userId, String jobId) async {
+    try {
+      await savedJobsCollection.doc('${userId}_$jobId').delete();
+    } catch (e) {
+      print('Error removing saved job: $e');
+      rethrow;
+    }
+  }
+
+  /// Check if a job is saved by the user
+  Future<bool> isJobSaved(String userId, String jobId) async {
+    try {
+      DocumentSnapshot doc = await savedJobsCollection.doc('${userId}_$jobId').get();
+      return doc.exists;
+    } catch (e) {
+      print('Error checking saved job: $e');
+      return false;
+    }
+  }
+
+  /// Get all saved jobs for a user with their full details
+  /// Returns a stream of saved jobs ordered by most recently saved first
+  Stream<List<Job>> getSavedJobs(String userId) {
+    return savedJobsCollection
+        .where('user_id', isEqualTo: userId)
+        .orderBy('saved_at', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Job> jobs = [];
+      for (var doc in snapshot.docs) {
+        final jobId = doc['job_id'];
+        final job = await getJob(jobId);
+        if (job != null) {
+          jobs.add(job);
+        }
+      }
+      return jobs;
+    });
   }
 }
