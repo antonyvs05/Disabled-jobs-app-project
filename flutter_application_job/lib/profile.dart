@@ -90,11 +90,15 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final updated = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const EditProfilePage()),
               );
+              // Refresh profile if it was updated
+              if (updated == true && mounted) {
+                _loadUserData();
+              }
             },
           ),
           PopupMenuButton<String>(
@@ -317,22 +321,21 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.all(16),
                       child: currentUser.preferences.isEmpty
                           ? const Text('No preferences set')
-                          : Column(
-                              children: currentUser.preferences.entries.map((entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        entry.key.replaceAll('_', ' ').toUpperCase(),
-                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: currentUser.preferences.entries
+                                  .where((entry) => entry.value == true)
+                                  .map((entry) {
+                                    return Chip(
+                                      label: Text(entry.key),
+                                      backgroundColor: const Color(0xFFE8F4F8),
+                                      labelStyle: const TextStyle(
+                                        color: Color(0xFF2C3E50),
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      Text(entry.value.toString()),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                     ),
                   ),
