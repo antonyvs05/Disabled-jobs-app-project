@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
+import 'search.dart';
+import 'saved.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -43,7 +45,15 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: _currentIndex == 0 ? _buildHomeContent() : const ProfilePage(),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildHomeContent(),
+          const SearchPage(),
+          const SavedPage(),
+          const ProfilePage(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF3498DB),
@@ -114,33 +124,6 @@ class _HomePageState extends State<HomePage> {
                   fontWeight: FontWeight.w400,
                   color: Colors.white.withOpacity(0.9),
                   letterSpacing: 0.2,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Search Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search for jobs...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
                 ),
               ),
             ],
@@ -350,4 +333,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  
 }
