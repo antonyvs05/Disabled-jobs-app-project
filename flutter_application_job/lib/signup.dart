@@ -18,6 +18,8 @@ class _SignUpPageState extends State<SignUpPage> {
   UserRole _selectedRole = UserRole.job_seeker;
   bool _isLoading = false;
   String? _errorMessage;
+  String _passwordStrength = '';
+  Color _passwordStrengthColor = Colors.grey;
 
   @override
   void dispose() {
@@ -26,6 +28,46 @@ class _SignUpPageState extends State<SignUpPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _updatePasswordStrength(String password) {
+    setState(() {
+      if (password.isEmpty) {
+        _passwordStrength = '';
+        _passwordStrengthColor = Colors.grey;
+      } else if (password.length < 6) {
+        _passwordStrength = 'Weak - too short';
+        _passwordStrengthColor = Colors.red;
+      } else {
+        int strength = 0;
+        // Check length (6+ characters)
+        if (password.length >= 6) strength++;
+        if (password.length >= 8) strength++;
+        if (password.length >= 12) strength++;
+        // Check for uppercase
+        if (password.contains(RegExp(r'[A-Z]'))) strength++;
+        // Check for lowercase
+        if (password.contains(RegExp(r'[a-z]'))) strength++;
+        // Check for numbers
+        if (password.contains(RegExp(r'[0-9]'))) strength++;
+        // Check for special characters
+        if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength++;
+
+        if (strength < 3) {
+          _passwordStrength = 'Weak';
+          _passwordStrengthColor = Colors.red;
+        } else if (strength < 5) {
+          _passwordStrength = 'Fair';
+          _passwordStrengthColor = Colors.orange;
+        } else if (strength < 6) {
+          _passwordStrength = 'Good';
+          _passwordStrengthColor = Colors.amber;
+        } else {
+          _passwordStrength = 'Strong';
+          _passwordStrengthColor = Colors.green;
+        }
+      }
+    });
   }
 
   Future<void> _handleSignUp() async {
@@ -261,6 +303,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             controller: _passwordController,
                             obscureText: true,
                             enabled: !_isLoading,
+                            onChanged: _updatePasswordStrength,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: const Icon(Icons.lock),
@@ -269,6 +312,34 @@ class _SignUpPageState extends State<SignUpPage> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          
+                          // Password Strength Indicator
+                          if (_passwordStrength.isNotEmpty)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: _passwordController.text.length / 20,
+                                      minHeight: 6,
+                                      backgroundColor: Colors.grey.shade300,
+                                      valueColor: AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _passwordStrength,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _passwordStrengthColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           const SizedBox(height: 16),
 
                           // Confirm Password TextField
