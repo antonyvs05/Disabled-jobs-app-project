@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'models/user_model.dart';
+import 'services/firebase_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -14,6 +16,8 @@ class _SignUpPageState extends State<SignUpPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   UserRole _selectedRole = UserRole.job_seeker;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -24,28 +28,76 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  void _handleSignUp() {
+  Future<void> _handleSignUp() async {
     // Validation
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      setState(() {
+        _errorMessage = 'Please fill in all fields';
+      });
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      setState(() {
+        _errorMessage = 'Passwords do not match';
+      });
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account created successfully!')),
-    );
-    Navigator.pop(context);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Create Firebase Auth user
+      final userCredential = await auth.FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Create user document in Firestore
+      final user = User(
+        id: userCredential.user!.uid,
+        email: _emailController.text.trim(),
+        name: _nameController.text.trim(),
+        role: _selectedRole,
+        createdAt: DateTime.now(),
+        skills: [],
+        preferences: {},
+        functionalNeeds: [],
+      );
+
+      await FirebaseService().createUser(user);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully!')),
+        );
+        Navigator.pop(context);
+      }
+    } on auth.FirebaseAuthException catch (e) {
+      setState(() {
+        _isLoading = false;
+        if (e.code == 'weak-password') {
+          _errorMessage = 'Password is too weak';
+        } else if (e.code == 'email-already-in-use') {
+          _errorMessage = 'Email is already in use';
+        } else if (e.code == 'invalid-email') {
+          _errorMessage = 'Invalid email format';
+        } else {
+          _errorMessage = e.message ?? 'Signup failed';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'An error occurred: $e';
+      });
+    }
   }
 
   @override
@@ -122,9 +174,34 @@ class _SignUpPageState extends State<SignUpPage> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
+                          // Error Message
+                          if (_errorMessage != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red.shade600),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: TextStyle(color: Colors.red.shade600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (_errorMessage != null) const SizedBox(height: 16),
+
                           // Name TextField
                           TextField(
                             controller: _nameController,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Full Name',
                               prefixIcon: const Icon(Icons.person),
@@ -139,6 +216,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           TextField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Email',
                               prefixIcon: const Icon(Icons.email),
@@ -152,6 +230,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           // Role Dropdown
                           DropdownButtonFormField<UserRole>(
                             initialValue: _selectedRole,
+                            disabledHint: _isLoading ? null : const Text(''),
                             decoration: InputDecoration(
                               labelText: 'I am a',
                               prefixIcon: const Icon(Icons.badge),
@@ -169,7 +248,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 child: Text('Employer'),
                               ),
                             ],
-                            onChanged: (value) {
+                            onChanged: _isLoading ? null : (value) {
                               setState(() {
                                 _selectedRole = value!;
                               });
@@ -181,6 +260,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           TextField(
                             controller: _passwordController,
                             obscureText: true,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: const Icon(Icons.lock),
@@ -195,6 +275,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           TextField(
                             controller: _confirmPasswordController,
                             obscureText: true,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Confirm Password',
                               prefixIcon: const Icon(Icons.lock_outline),
@@ -210,7 +291,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: _handleSignUp,
+                              onPressed: _isLoading ? null : _handleSignUp,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF3498DB),
                                 foregroundColor: Colors.white,
@@ -219,14 +300,23 @@ class _SignUpPageState extends State<SignUpPage> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Sign Up',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],

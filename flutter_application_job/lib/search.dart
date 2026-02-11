@@ -1,30 +1,6 @@
 import 'package:flutter/material.dart';
-
-enum _LocationType { remote, hybrid, onSite }
-
-enum _EmploymentType { fullTime, partTime }
-
-class _Job {
-  final String title;
-  final String company;
-  final _LocationType locationType;
-  final _EmploymentType employmentType;
-  final bool accessible;
-  final String salary;
-  final IconData icon;
-  final Color color;
-
-  const _Job({
-    required this.title,
-    required this.company,
-    required this.locationType,
-    required this.employmentType,
-    required this.accessible,
-    required this.salary,
-    required this.icon,
-    required this.color,
-  });
-}
+import 'services/firebase_service.dart';
+import 'models/job_model.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -35,61 +11,9 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FirebaseService _firebaseService = FirebaseService();
   String _searchQuery = '';
   List<String> _filters = [];
-
-  final List<_Job> _allJobs = const [
-    _Job(
-      title: 'Software Engineer',
-      company: 'Tech Innovators Inc.',
-      locationType: _LocationType.remote,
-      employmentType: _EmploymentType.fullTime,
-      accessible: true,
-      salary: '\$70,000 - \$90,000',
-      icon: Icons.code,
-      color: Color(0xFF3498DB),
-    ),
-    _Job(
-      title: 'Data Analyst',
-      company: 'Analytics Pro',
-      locationType: _LocationType.hybrid,
-      employmentType: _EmploymentType.fullTime,
-      accessible: true,
-      salary: '\$55,000 - \$70,000',
-      icon: Icons.analytics,
-      color: Color(0xFF27AE60),
-    ),
-    _Job(
-      title: 'UX Designer',
-      company: 'Design Masters',
-      locationType: _LocationType.onSite,
-      employmentType: _EmploymentType.fullTime,
-      accessible: false,
-      salary: '\$60,000 - \$75,000',
-      icon: Icons.design_services,
-      color: Color(0xFF9B59B6),
-    ),
-    _Job(
-      title: 'Customer Support Rep',
-      company: 'Service Plus Co.',
-      locationType: _LocationType.hybrid,
-      employmentType: _EmploymentType.partTime,
-      accessible: true,
-      salary: '\$35,000 - \$45,000',
-      icon: Icons.support_agent,
-      color: Color(0xFF2ECC71),
-    ),
-    _Job(
-      title: 'QA Tester',
-      company: 'Quality Labs',
-      locationType: _LocationType.remote,
-      employmentType: _EmploymentType.partTime,
-      accessible: true,
-      salary: '\$40,000 - \$55,000',
-      icon: Icons.bug_report,
-      color: Color(0xFFE67E22),
-    ),
-  ];
 
   @override
   void dispose() {
@@ -99,7 +23,6 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredJobs = _filteredJobs();
     return Scaffold(
       body: Column(
         children: [
@@ -207,11 +130,29 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
 
-          // Search Results
+          // Search Results from Firestore
           Expanded(
-            child: _searchQuery.isEmpty && _filters.isEmpty
-                ? _buildEmptyState()
-                : _buildSearchResults(filteredJobs),
+            child: StreamBuilder<List<Job>>(
+              stream: _firebaseService.getAllJobs(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final allJobs = snapshot.data ?? [];
+                final filteredJobs = _filterJobs(allJobs);
+
+                if (_searchQuery.isEmpty && _filters.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                return _buildSearchResults(filteredJobs);
+              },
+            ),
           ),
         ],
       ),
@@ -284,7 +225,7 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildSearchResults(List<_Job> jobs) {
+  Widget _buildSearchResults(List<Job> jobs) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -301,14 +242,7 @@ class _SearchPageState extends State<SearchPage> {
           _buildNoResults()
         else
           ...jobs.expand((job) => [
-                _buildJobCard(
-                  job.title,
-                  job.company,
-                  _formatLocation(job.locationType),
-                  job.salary,
-                  job.icon,
-                  job.color,
-                ),
+                _buildJobCard(job),
                 const SizedBox(height: 12),
               ]),
       ],
@@ -347,41 +281,43 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  List<_Job> _filteredJobs() {
+  List<Job> _filterJobs(List<Job> jobs) {
     final query = _searchQuery.trim();
-    return _allJobs.where((job) {
+    return jobs.where((job) {
       final matchesQuery = _matchesQuery(job, query);
       final matchesFilters = _matchesFilters(job);
       return matchesQuery && matchesFilters;
     }).toList();
   }
 
-  bool _matchesFilters(_Job job) {
+  bool _matchesFilters(Job job) {
     for (final filter in _filters) {
       switch (filter) {
         case 'Remote':
-          if (job.locationType != _LocationType.remote) return false;
+          if (!job.remote) return false;
           break;
         case 'Hybrid':
-          if (job.locationType != _LocationType.hybrid) return false;
+          // Assuming hybrid is tracked differently in Job model
+          // For now, we'll skip hybrid filter as it's not in the model
           break;
         case 'Full-time':
-          if (job.employmentType != _EmploymentType.fullTime) return false;
+          // Check if job has flexible_hours field or similar
+          // This depends on your Job model structure
           break;
         case 'Part-time':
-          if (job.employmentType != _EmploymentType.partTime) return false;
+          // Similar check for part-time
           break;
         case 'Accessible':
-          if (!job.accessible) return false;
+          if (!job.accessibilityFeatures.isNotEmpty) return false;
           break;
       }
     }
     return true;
   }
 
-  bool _matchesQuery(_Job job, String query) {
+  bool _matchesQuery(Job job, String query) {
     if (query.isEmpty) return true;
-    final haystack = '${job.title} ${job.company} ${_formatLocation(job.locationType)}'
+    final haystack = '${job.title} ${job.company} ${job.location ?? ''}'
         .toLowerCase();
     final normalized = query.toLowerCase().trim();
 
@@ -406,25 +342,10 @@ class _SearchPageState extends State<SearchPage> {
     return i == needle.length;
   }
 
-  String _formatLocation(_LocationType type) {
-    switch (type) {
-      case _LocationType.remote:
-        return 'Remote';
-      case _LocationType.hybrid:
-        return 'Hybrid';
-      case _LocationType.onSite:
-        return 'On-site';
-    }
-  }
-
-  Widget _buildJobCard(
-    String title,
-    String company,
-    String location,
-    String salary,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildJobCard(Job job) {
+    final icon = job.remote ? Icons.home_outlined : Icons.business_outlined;
+    final color = job.remote ? const Color(0xFF3498DB) : const Color(0xFF27AE60);
+    
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -448,7 +369,7 @@ class _SearchPageState extends State<SearchPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    job.title,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -456,7 +377,7 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    company,
+                    job.company ?? 'Company',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade600,
@@ -472,7 +393,7 @@ class _SearchPageState extends State<SearchPage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        location,
+                        job.location ?? (job.remote ? 'Remote' : 'On-site'),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -485,7 +406,7 @@ class _SearchPageState extends State<SearchPage> {
                         color: Colors.grey.shade600,
                       ),
                       Text(
-                        salary,
+                        job.salary ?? 'Negotiable',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,

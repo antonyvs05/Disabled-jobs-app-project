@@ -228,4 +228,80 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  // Initialize with sample jobs (for testing)
+  Future<void> seedSampleJobs() async {
+    try {
+      final sampleJobs = [
+        {
+          'employer_id': 'employer_1',
+          'title': 'Software Engineer',
+          'company': 'Tech Innovators Inc.',
+          'description': 'Looking for a talented software engineer to join our team.',
+          'remote': true,
+          'flexible_hours': true,
+          'accessibility_features': ['remote_work', 'flexible_schedule'],
+          'location': 'Remote',
+          'salary': '\$70,000 - \$90,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_2',
+          'title': 'Data Analyst',
+          'company': 'Analytics Pro',
+          'description': 'Help us analyze data and make informed business decisions.',
+          'remote': false,
+          'flexible_hours': true,
+          'accessibility_features': ['accessible_building', 'flexible_schedule'],
+          'location': 'New York, NY',
+          'salary': '\$55,000 - \$70,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_3',
+          'title': 'UX Designer',
+          'company': 'Design Masters',
+          'description': 'Create beautiful and user-friendly designs.',
+          'remote': false,
+          'flexible_hours': false,
+          'accessibility_features': [],
+          'location': 'San Francisco, CA',
+          'salary': '\$60,000 - \$75,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_4',
+          'title': 'Customer Support Rep',
+          'company': 'Service Plus Co.',
+          'description': 'Provide excellent customer support and build relationships.',
+          'remote': false,
+          'flexible_hours': true,
+          'accessibility_features': ['accessible_building'],
+          'location': 'Chicago, IL',
+          'salary': '\$35,000 - \$45,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_5',
+          'title': 'QA Tester',
+          'company': 'Quality Labs',
+          'description': 'Test our applications and report bugs.',
+          'remote': true,
+          'flexible_hours': true,
+          'accessibility_features': ['remote_work'],
+          'location': 'Remote',
+          'salary': '\$40,000 - \$55,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+      ];
+
+      for (final job in sampleJobs) {
+        await jobsCollection.add(job);
+      }
+      print('Sample jobs seeded successfully');
+    } catch (e) {
+      print('Error seeding sample jobs: $e');
+      rethrow;
+    }
+  }
 }
