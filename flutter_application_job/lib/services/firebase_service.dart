@@ -125,11 +125,21 @@ class FirebaseService {
         .orderBy('created_at', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final jobs = snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return Job.fromJson(data);
       }).toList();
+      
+      // Remove duplicates by job ID
+      final seen = <String>{};
+      final uniqueJobs = <Job>[];
+      for (final job in jobs) {
+        if (seen.add(job.id)) {
+          uniqueJobs.add(job);
+        }
+      }
+      return uniqueJobs;
     });
   }
 

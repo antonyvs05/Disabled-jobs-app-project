@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'services/firebase_service.dart';
 import 'models/job_model.dart';
 
@@ -283,6 +284,8 @@ class _SearchPageState extends State<SearchPage> {
 
   List<Job> _filterJobs(List<Job> jobs) {
     final query = _searchQuery.trim();
+    
+    // Apply query and filter matching
     return jobs.where((job) {
       final matchesQuery = _matchesQuery(job, query);
       final matchesFilters = _matchesFilters(job);
@@ -297,18 +300,16 @@ class _SearchPageState extends State<SearchPage> {
           if (!job.remote) return false;
           break;
         case 'Hybrid':
-          // Assuming hybrid is tracked differently in Job model
-          // For now, we'll skip hybrid filter as it's not in the model
+          // For now, we'll consider jobs without explicit remote flag as hybrid potential
           break;
         case 'Full-time':
-          // Check if job has flexible_hours field or similar
-          // This depends on your Job model structure
+          if (job.flexibleHours == true) return false;
           break;
         case 'Part-time':
-          // Similar check for part-time
+          if (job.flexibleHours != true) return false;
           break;
         case 'Accessible':
-          if (!job.accessibilityFeatures.isNotEmpty) return false;
+          if (job.accessibilityFeatures.isEmpty) return false;
           break;
       }
     }
@@ -384,46 +385,137 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 4,
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: Colors.grey.shade600,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              job.location ?? (job.remote ? 'Remote' : 'On-site'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        job.location ?? (job.remote ? 'Remote' : 'On-site'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.attach_money,
-                        size: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                      Text(
-                        job.salary ?? 'Negotiable',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.attach_money,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          Flexible(
+                            child: Text(
+                              job.salary ?? 'Negotiable',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.bookmark_outline,
-              color: Colors.grey.shade400,
-            ),
+            _buildSaveButton(job),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSaveButton(Job job) {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    
+    if (currentUser == null) {
+      return Icon(Icons.bookmark_outline, color: Colors.grey.shade400);
+    }
+
+    return _SaveButtonWidget(userId: currentUser.uid, jobId: job.id);
+  }
+}
+
+class _SaveButtonWidget extends StatefulWidget {
+  final String userId;
+  final String jobId;
+
+  const _SaveButtonWidget({required this.userId, required this.jobId});
+
+  @override
+  State<_SaveButtonWidget> createState() => _SaveButtonWidgetState();
+}
+
+class _SaveButtonWidgetState extends State<_SaveButtonWidget> {
+  bool _isSaved = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedStatus();
+  }
+
+  Future<void> _loadSavedStatus() async {
+    final saved = await FirebaseService().isJobSaved(widget.userId, widget.jobId);
+    if (mounted) {
+      setState(() {
+        _isSaved = saved;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        _isSaved ? Icons.bookmark : Icons.bookmark_outline,
+        color: _isSaved ? const Color(0xFF3498DB) : Colors.grey.shade400,
+      ),
+      onPressed: _isLoading ? null : () async {
+        setState(() {
+          _isLoading = true;
+        });
+        
+        try {
+          if (_isSaved) {
+            await FirebaseService().removeSavedJob(widget.userId, widget.jobId);
+          } else {
+            await FirebaseService().saveJob(widget.userId, widget.jobId);
+          }
+          
+          if (mounted) {
+            setState(() {
+              _isSaved = !_isSaved;
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          print('Error toggling saved job: $e');
+        }
+      },
     );
   }
 }
