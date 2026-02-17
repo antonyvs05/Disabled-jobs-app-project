@@ -4,6 +4,7 @@ import 'services/firebase_service.dart';
 import 'models/job_model.dart';
 import 'theme/app_colors.dart';
 import 'widgets/save_job_button.dart';
+import 'job_details.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -245,7 +246,17 @@ class _SearchPageState extends State<SearchPage> {
           _buildNoResults()
         else
           ...jobs.expand((job) => [
-                _buildJobCard(job),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JobDetailsPage(job: job),
+                      ),
+                    );
+                  },
+                  child: _buildJobCard(job),
+                ),
                 const SizedBox(height: 12),
               ]),
       ],

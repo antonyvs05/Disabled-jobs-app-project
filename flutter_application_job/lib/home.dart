@@ -6,6 +6,7 @@ import 'models/user_model.dart' show User;
 import 'profile.dart';
 import 'search.dart';
 import 'saved.dart';
+import 'job_details.dart';
 import 'theme/app_colors.dart';
 import 'widgets/save_job_button.dart';
 import 'widgets/profile_setup_checklist.dart';
@@ -323,14 +324,24 @@ class _HomePageState extends State<HomePage> {
                         final color = job.remote ? Colors.blue : Colors.green;
                         
                         return [
-                          _buildJobCard(
-                            job.id,
-                            job.title,
-                            job.company ?? 'Company',
-                            job.location ?? (job.remote ? 'Remote' : 'On-site'),
-                            job.salary ?? 'Negotiable',
-                            icon,
-                            color,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => JobDetailsPage(job: job),
+                                ),
+                              );
+                            },
+                            child: _buildJobCard(
+                              job.id,
+                              job.title,
+                              job.company ?? 'Company',
+                              job.location ?? (job.remote ? 'Remote' : 'On-site'),
+                              job.salary ?? 'Negotiable',
+                              icon,
+                              color,
+                            ),
                           ),
                           const SizedBox(height: 12),
                         ];
