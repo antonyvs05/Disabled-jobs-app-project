@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'services/firebase_service.dart';
+import 'models/job_model.dart';
+import 'profile.dart';
+import 'search.dart';
+import 'saved.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Job Finder'),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text(
+          'Access Work',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2C3E50),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -20,188 +39,286 @@ class HomePage extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
-            onPressed: () {
-              // Handle profile
+            onPressed: _currentIndex == 3 ? null : () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
             },
           ),
         ],
       ),
-      body: Column(
+      body: IndexedStack(
+        index: _currentIndex,
         children: [
-          // Welcome Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.blue.shade800,
-                  Colors.blue.shade600,
-                ],
+          _buildHomeContent(),
+          const SearchPage(),
+          const SavedPage(),
+          const ProfilePage(),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF3498DB),
+        foregroundColor: Colors.white,
+        onPressed: () {
+          _showMeetingOptions();
+        },
+        child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                index: 0,
+                icon: Icons.home,
+                label: 'Home',
+              ),
+              _buildNavItem(
+                index: 1,
+                icon: Icons.search,
+                label: 'Search',
+              ),
+              const SizedBox(width: 48),
+              _buildNavItem(
+                index: 2,
+                icon: Icons.bookmark_outline,
+                label: 'Saved',
+              ),
+              _buildNavItem(
+                index: 3,
+                icon: Icons.person_outline,
+                label: 'Profile',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _currentIndex == index;
+    final color = isSelected ? const Color(0xFF3498DB) : Colors.grey.shade600;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMeetingOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Welcome Back!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                ListTile(
+                  leading: const Icon(Icons.group_add, color: Color(0xFF3498DB)),
+                  title: const Text('Join a meeting'),
+                  subtitle: const Text('Enter a session code to join'),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Find your dream job today',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Search Bar
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search for jobs...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
+                ListTile(
+                  leading: const Icon(Icons.video_call, color: Color(0xFF3498DB)),
+                  title: const Text('Create a meeting'),
+                  subtitle: const Text('Start a new session'),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
                 ),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
 
-          // Main Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Categories Section
-                  const Text(
-                    'Job Categories',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 100,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _buildCategoryCard('Technology', Icons.computer, Colors.blue),
-                        _buildCategoryCard('Healthcare', Icons.local_hospital, Colors.red),
-                        _buildCategoryCard('Education', Icons.school, Colors.green),
-                        _buildCategoryCard('Business', Icons.business, Colors.orange),
-                        _buildCategoryCard('Arts', Icons.palette, Colors.purple),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Featured Jobs Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Featured Jobs',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // View all jobs
-                        },
-                        child: const Text('See All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Job Cards
-                  _buildJobCard(
-                    'Software Developer',
-                    'Tech Solutions Inc.',
-                    'Remote',
-                    '\$60,000 - \$80,000',
-                    Icons.computer,
-                    Colors.blue,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildJobCard(
-                    'Customer Service Rep',
-                    'Service Plus Co.',
-                    'Hybrid',
-                    '\$35,000 - \$45,000',
-                    Icons.support_agent,
-                    Colors.green,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildJobCard(
-                    'Graphic Designer',
-                    'Creative Studio',
-                    'On-site',
-                    '\$40,000 - \$55,000',
-                    Icons.design_services,
-                    Colors.purple,
-                  ),
-                ],
-              ),
+  Widget _buildHomeContent() {
+    return Column(
+      children: [
+        // Welcome Section
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF2C3E50),
+                Color(0xFF34495E),
+              ],
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue.shade800,
-        unselectedItemColor: Colors.grey,
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Welcome Back',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Discover inclusive job opportunities',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white.withOpacity(0.9),
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+        ),
+
+        // Main Content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Categories Section
+                const Text(
+                  'Job Categories',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 100,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildCategoryCard('Technology', Icons.computer, Colors.blue),
+                      _buildCategoryCard('Healthcare', Icons.local_hospital, Colors.red),
+                      _buildCategoryCard('Education', Icons.school, Colors.green),
+                      _buildCategoryCard('Business', Icons.business, Colors.orange),
+                      _buildCategoryCard('Arts', Icons.palette, Colors.purple),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Featured Jobs Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Featured Jobs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // View all jobs
+                      },
+                      child: const Text('See All'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Job Cards from Database
+                StreamBuilder<List<Job>>(
+                  stream: FirebaseService().getAllJobs(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final jobs = snapshot.data ?? [];
+                    final featuredJobs = jobs.take(3).toList();
+
+                    if (featuredJobs.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No jobs available',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: featuredJobs.expand((job) {
+                        final icon = job.remote ? Icons.home_outlined : Icons.business_outlined;
+                        final color = job.remote ? Colors.blue : Colors.green;
+                        
+                        return [
+                          _buildJobCard(
+                            job.id,
+                            job.title,
+                            job.company ?? 'Company',
+                            job.location ?? (job.remote ? 'Remote' : 'On-site'),
+                            job.salary ?? 'Negotiable',
+                            icon,
+                            color,
+                          ),
+                          const SizedBox(height: 12),
+                        ];
+                      }).toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark_outline),
-            label: 'Saved',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -233,6 +350,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildJobCard(
+    String jobId,
     String title,
     String company,
     String location,
@@ -240,6 +358,8 @@ class HomePage extends StatelessWidget {
     IconData icon,
     Color color,
   ) {
+    // Create a simple Job object for saving functionality
+    // We'll use the jobId as a pseudo-ID for home page featured jobs
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -278,46 +398,155 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 4,
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: Colors.grey.shade600,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              location,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        location,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.attach_money,
-                        size: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                      Text(
-                        salary,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.attach_money,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          Flexible(
+                            child: Text(
+                              salary,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.bookmark_outline,
-              color: Colors.grey.shade400,
-            ),
+            _buildHomePageSaveButton(jobId),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHomePageSaveButton(String jobId) {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    
+    if (currentUser == null) {
+      return Icon(Icons.bookmark_outline, color: Colors.grey.shade400);
+    }
+
+    return _SaveButtonWidget(
+      key: ValueKey('$currentUser-$jobId'),
+      userId: currentUser.uid,
+      jobId: jobId,
+    );
+  }
+}
+
+class _SaveButtonWidget extends StatefulWidget {
+  final String userId;
+  final String jobId;
+
+  const _SaveButtonWidget({required this.userId, required this.jobId, super.key});
+
+  @override
+  State<_SaveButtonWidget> createState() => _SaveButtonWidgetState();
+}
+
+class _SaveButtonWidgetState extends State<_SaveButtonWidget> with WidgetsBindingObserver {
+  bool _isSaved = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadSavedStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadSavedStatus();
+    }
+  }
+
+  Future<void> _loadSavedStatus() async {
+    final saved = await FirebaseService().isJobSaved(widget.userId, widget.jobId);
+    if (mounted) {
+      setState(() {
+        _isSaved = saved;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        _isSaved ? Icons.bookmark : Icons.bookmark_outline,
+        color: _isSaved ? const Color(0xFF3498DB) : Colors.grey.shade400,
+      ),
+      onPressed: _isLoading ? null : () async {
+        setState(() {
+          _isLoading = true;
+        });
+        
+        try {
+          if (_isSaved) {
+            await FirebaseService().removeSavedJob(widget.userId, widget.jobId);
+          } else {
+            await FirebaseService().saveJob(widget.userId, widget.jobId);
+          }
+          
+          if (mounted) {
+            setState(() {
+              _isSaved = !_isSaved;
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          print('Error toggling saved job: $e');
+        }
+      },
     );
   }
 }

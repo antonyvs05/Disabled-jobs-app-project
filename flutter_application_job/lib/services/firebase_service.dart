@@ -1,0 +1,372 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import '../models/user_model.dart';
+import '../models/job_model.dart';
+import '../models/application_model.dart';
+
+class FirebaseService {
+  static final FirebaseService _instance = FirebaseService._internal();
+  factory FirebaseService() => _instance;
+  FirebaseService._internal();
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
+
+  // Collections
+  CollectionReference get usersCollection => _firestore.collection('users');
+  CollectionReference get jobsCollection => _firestore.collection('jobs');
+  CollectionReference get applicationsCollection => _firestore.collection('applications');
+  CollectionReference get savedJobsCollection => _firestore.collection('saved_jobs');
+
+  // Auth Methods
+  Future<auth.User?> signUp(String email, String password) async {
+    try {
+      auth.UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
+    } catch (e) {
+      print('Error signing up: $e');
+      rethrow;
+    }
+  }
+
+  Future<auth.User?> signIn(String email, String password) async {
+    try {
+      auth.UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
+    } catch (e) {
+      print('Error signing in: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  auth.User? getCurrentUser() {
+    return _auth.currentUser;
+  }
+
+  // User CRUD Operations
+  Future<void> createUser(User user) async {
+    try {
+      await usersCollection.doc(user.id).set(user.toJson());
+    } catch (e) {
+      print('Error creating user: $e');
+      rethrow;
+    }
+  }
+
+  Future<User?> getUser(String userId) async {
+    try {
+      DocumentSnapshot doc = await usersCollection.doc(userId).get();
+      if (doc.exists) {
+        return User.fromJson(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
+    try {
+      await usersCollection.doc(userId).update(data);
+    } catch (e) {
+      print('Error updating user: $e');
+      rethrow;
+    }
+  }
+
+  Stream<User?> getUserStream(String userId) {
+    return usersCollection.doc(userId).snapshots().map((snapshot) {
+      if (snapshot.exists) {
+        return User.fromJson(snapshot.data() as Map<String, dynamic>);
+      }
+      return null;
+    });
+  }
+
+  // Job CRUD Operations
+  Future<String> createJob(Job job) async {
+    try {
+      DocumentReference docRef = await jobsCollection.add(job.toJson());
+      return docRef.id;
+    } catch (e) {
+      print('Error creating job: $e');
+      rethrow;
+    }
+  }
+
+  Future<Job?> getJob(String jobId) async {
+    try {
+      DocumentSnapshot doc = await jobsCollection.doc(jobId).get();
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return Job.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting job: $e');
+      rethrow;
+    }
+  }
+
+  Stream<List<Job>> getAllJobs() {
+    return jobsCollection
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      final jobs = snapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return Job.fromJson(data);
+      }).toList();
+      
+      // Remove duplicates by job ID
+      final seen = <String>{};
+      final uniqueJobs = <Job>[];
+      for (final job in jobs) {
+        if (seen.add(job.id)) {
+          uniqueJobs.add(job);
+        }
+      }
+      return uniqueJobs;
+    });
+  }
+
+  Stream<List<Job>> getJobsByEmployer(String employerId) {
+    return jobsCollection
+        .where('employer_id', isEqualTo: employerId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return Job.fromJson(data);
+      }).toList();
+    });
+  }
+
+  Future<void> updateJob(String jobId, Map<String, dynamic> data) async {
+    try {
+      await jobsCollection.doc(jobId).update(data);
+    } catch (e) {
+      print('Error updating job: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteJob(String jobId) async {
+    try {
+      await jobsCollection.doc(jobId).delete();
+    } catch (e) {
+      print('Error deleting job: $e');
+      rethrow;
+    }
+  }
+
+  // Application CRUD Operations
+  Future<String> createApplication(Application application) async {
+    try {
+      DocumentReference docRef = await applicationsCollection.add(application.toJson());
+      return docRef.id;
+    } catch (e) {
+      print('Error creating application: $e');
+      rethrow;
+    }
+  }
+
+  Stream<List<Application>> getUserApplications(String userId) {
+    return applicationsCollection
+        .where('user_id', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Application.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList();
+    });
+  }
+
+  Stream<List<Application>> getJobApplications(String jobId) {
+    return applicationsCollection
+        .where('job_id', isEqualTo: jobId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Application.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList();
+    });
+  }
+
+  Future<void> updateApplicationStatus(
+      String userId, String jobId, ApplicationStatus status) async {
+    try {
+      QuerySnapshot snapshot = await applicationsCollection
+          .where('user_id', isEqualTo: userId)
+          .where('job_id', isEqualTo: jobId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        await snapshot.docs.first.reference.update({
+          'status': status.toString().split('.').last,
+        });
+      }
+    } catch (e) {
+      print('Error updating application status: $e');
+      rethrow;
+    }
+  }
+
+  // Check if user has applied to a job
+  Future<bool> hasApplied(String userId, String jobId) async {
+    try {
+      QuerySnapshot snapshot = await applicationsCollection
+          .where('user_id', isEqualTo: userId)
+          .where('job_id', isEqualTo: jobId)
+          .get();
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      print('Error checking application: $e');
+      rethrow;
+    }
+  }
+
+  // Initialize with sample jobs (for testing)
+  Future<void> seedSampleJobs() async {
+    try {
+      final sampleJobs = [
+        {
+          'employer_id': 'employer_1',
+          'title': 'Software Engineer',
+          'company': 'Tech Innovators Inc.',
+          'description': 'Looking for a talented software engineer to join our team.',
+          'remote': true,
+          'flexible_hours': true,
+          'accessibility_features': ['remote_work', 'flexible_schedule'],
+          'location': 'Remote',
+          'salary': '\$70,000 - \$90,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_2',
+          'title': 'Data Analyst',
+          'company': 'Analytics Pro',
+          'description': 'Help us analyze data and make informed business decisions.',
+          'remote': false,
+          'flexible_hours': true,
+          'accessibility_features': ['accessible_building', 'flexible_schedule'],
+          'location': 'New York, NY',
+          'salary': '\$55,000 - \$70,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_3',
+          'title': 'UX Designer',
+          'company': 'Design Masters',
+          'description': 'Create beautiful and user-friendly designs.',
+          'remote': false,
+          'flexible_hours': false,
+          'accessibility_features': [],
+          'location': 'San Francisco, CA',
+          'salary': '\$60,000 - \$75,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_4',
+          'title': 'Customer Support Rep',
+          'company': 'Service Plus Co.',
+          'description': 'Provide excellent customer support and build relationships.',
+          'remote': false,
+          'flexible_hours': true,
+          'accessibility_features': ['accessible_building'],
+          'location': 'Chicago, IL',
+          'salary': '\$35,000 - \$45,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'employer_id': 'employer_5',
+          'title': 'QA Tester',
+          'company': 'Quality Labs',
+          'description': 'Test our applications and report bugs.',
+          'remote': true,
+          'flexible_hours': true,
+          'accessibility_features': ['remote_work'],
+          'location': 'Remote',
+          'salary': '\$40,000 - \$55,000',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+      ];
+
+      for (final job in sampleJobs) {
+        await jobsCollection.add(job);
+      }
+      print('Sample jobs seeded successfully');
+    } catch (e) {
+      print('Error seeding sample jobs: $e');
+      rethrow;
+    }
+  }
+
+  // Saved Jobs Methods
+  Future<void> saveJob(String userId, String jobId) async {
+    try {
+      await savedJobsCollection.doc('${userId}_$jobId').set({
+        'user_id': userId,
+        'job_id': jobId,
+        'saved_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print('Error saving job: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeSavedJob(String userId, String jobId) async {
+    try {
+      await savedJobsCollection.doc('${userId}_$jobId').delete();
+    } catch (e) {
+      print('Error removing saved job: $e');
+      rethrow;
+    }
+  }
+
+  /// Check if a job is saved by the user
+  Future<bool> isJobSaved(String userId, String jobId) async {
+    try {
+      DocumentSnapshot doc = await savedJobsCollection.doc('${userId}_$jobId').get();
+      return doc.exists;
+    } catch (e) {
+      print('Error checking saved job: $e');
+      return false;
+    }
+  }
+
+  /// Get all saved jobs for a user with their full details
+  /// Returns a stream of saved jobs ordered by most recently saved first
+  Stream<List<Job>> getSavedJobs(String userId) {
+    return savedJobsCollection
+        .where('user_id', isEqualTo: userId)
+        .orderBy('saved_at', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Job> jobs = [];
+      for (var doc in snapshot.docs) {
+        final jobId = doc['job_id'];
+        final job = await getJob(jobId);
+        if (job != null) {
+          jobs.add(job);
+        }
+      }
+      return jobs;
+    });
+  }
+}

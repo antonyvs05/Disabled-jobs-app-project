@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'models/user_model.dart';
+import 'edit_profile.dart';
+import 'settings.dart';
+import 'services/firebase_service.dart';
+import 'main.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -9,49 +14,91 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Mock user data
   late User currentUser;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with mock data
-    currentUser = User(
-      id: '1',
-      email: 'user@example.com',
-      role: UserRole.job_seeker,
-      skills: ['Flutter', 'Dart', 'UI/UX Design'],
-      preferences: {
-        'remote_work': true,
-        'flexible_hours': true,
-        'salary_range': '40000-60000',
-      },
-      functionalNeeds: [
-        'Screen Reader Support',
-        'Flexible Working Hours',
-        'Remote Work Options',
-      ],
-      createdAt: DateTime.now().subtract(const Duration(days: 30)),
-      name: 'John Doe',
-      phone: '+1234567890',
-      location: 'New York, NY',
-      bio: 'Experienced developer looking for accessible workplace opportunities.',
-    );
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final currentAuth = auth.FirebaseAuth.instance.currentUser;
+      if (currentAuth == null) {
+        setState(() {
+          _errorMessage = 'No user logged in';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final user = await FirebaseService().getUser(currentAuth.uid);
+      if (user != null) {
+        setState(() {
+          currentUser = user;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'User data not found';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading user data: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null || !mounted) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Profile'),
+          backgroundColor: const Color(0xFF2C3E50),
+        ),
+        body: Center(
+          child: Text(_errorMessage ?? 'Unknown error'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2C3E50),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () {
-              _showEditProfileDialog();
+            onPressed: () async {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditProfilePage()),
+              );
+              // Refresh profile if it was updated
+              if (updated == true && mounted) {
+                _loadUserData();
+              }
             },
           ),
           PopupMenuButton<String>(
@@ -60,7 +107,10 @@ class _ProfilePageState extends State<ProfilePage> {
               if (value == 'logout') {
                 _handleLogout();
               } else if (value == 'settings') {
-                _showSettingsDialog();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -95,13 +145,13 @@ class _ProfilePageState extends State<ProfilePage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.blue.shade800,
-                    Colors.blue.shade600,
+                    Color(0xFF2C3E50),
+                    Color(0xFF34495E),
                   ],
                 ),
               ),
@@ -114,13 +164,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 3),
                     ),
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.white,
                       child: Icon(
                         Icons.person,
                         size: 50,
-                        color: Colors.blue.shade800,
+                        color: Color(0xFF3498DB),
                       ),
                     ),
                   ),
@@ -213,8 +263,11 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: currentUser.skills.map((skill) {
                                 return Chip(
                                   label: Text(skill),
-                                  backgroundColor: Colors.blue.shade50,
-                                  labelStyle: TextStyle(color: Colors.blue.shade800),
+                                  backgroundColor: const Color(0xFFE8F4F8),
+                                  labelStyle: const TextStyle(
+                                    color: Color(0xFF2C3E50),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 );
                               }).toList(),
                             ),
@@ -236,12 +289,12 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: currentUser.functionalNeeds.map((need) {
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
+                                    child: Row(
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.accessible,
                                         size: 20,
-                                        color: Colors.blue.shade800,
+                                        color: Color(0xFF3498DB),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -268,22 +321,21 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.all(16),
                       child: currentUser.preferences.isEmpty
                           ? const Text('No preferences set')
-                          : Column(
-                              children: currentUser.preferences.entries.map((entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        entry.key.replaceAll('_', ' ').toUpperCase(),
-                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: currentUser.preferences.entries
+                                  .where((entry) => entry.value == true)
+                                  .map((entry) {
+                                    return Chip(
+                                      label: Text(entry.key),
+                                      backgroundColor: const Color(0xFFE8F4F8),
+                                      labelStyle: const TextStyle(
+                                        color: Color(0xFF2C3E50),
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      Text(entry.value.toString()),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                     ),
                   ),
@@ -333,7 +385,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blue.shade800),
+      leading: Icon(icon, color: const Color(0xFF3498DB)),
       title: Text(
         label,
         style: TextStyle(
@@ -356,38 +408,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  void _showEditProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: const Text('Profile editing feature coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettingsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Settings'),
-        content: const Text('Settings page coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _handleLogout() {
     showDialog(
       context: context,
@@ -400,9 +420,25 @@ class _ProfilePageState extends State<ProfilePage> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context); // Close dialog
-              Navigator.popUntil(context, (route) => route.isFirst); // Go back to login
+              try {
+                // Sign out from Firebase Auth (kills session)
+                await auth.FirebaseAuth.instance.signOut();
+                
+                if (mounted) {
+                  // Navigate back to login
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginSignUpPage()),
+                    (route) => false,
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logout error: $e')),
+                );
+              }
             },
             child: const Text(
               'Logout',

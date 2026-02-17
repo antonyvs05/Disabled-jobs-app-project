@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="4">
+    <issue
+        id="KotlinNullnessAnnotation"
+        message="Do not use @Nullable in Kotlin">
+        <ignore regexp="firebase_storage.*" />
+    </issue>
+</issues>

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'signup.dart';
 import 'home.dart';
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MainApp());
 }
 
@@ -13,9 +18,38 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Access Work',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: const Color(0xFF2C3E50),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2C3E50),
+          primary: const Color(0xFF2C3E50),
+          secondary: const Color(0xFF3498DB),
+        ),
         useMaterial3: true,
+        fontFamily: 'Roboto',
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+          headlineMedium: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+          bodyLarge: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.15,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.25,
+          ),
+        ),
       ),
       home: const LoginSignUpPage(),
     );
@@ -32,6 +66,8 @@ class LoginSignUpPage extends StatefulWidget {
 class _LoginSignUpPageState extends State<LoginSignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -40,17 +76,67 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
     super.dispose();
   }
 
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      if (email.isEmpty || password.isEmpty) {
+        setState(() {
+          _errorMessage = 'Please fill in all fields';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _isLoading = false;
+        if (e.code == 'user-not-found') {
+          _errorMessage = 'Email not found';
+        } else if (e.code == 'wrong-password') {
+          _errorMessage = 'Incorrect password';
+        } else if (e.code == 'invalid-email') {
+          _errorMessage = 'Invalid email format';
+        } else {
+          _errorMessage = e.message ?? 'Login failed';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'An error occurred: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.blue.shade400,
-              Colors.blue.shade800,
+              Color(0xFF34495E),
+              Color(0xFF2C3E50),
             ],
           ),
         ),
@@ -69,34 +155,37 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 20,
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.work,
+                    child: const Icon(
+                      Icons.accessible_forward,
                       size: 60,
-                      color: Colors.blue.shade800,
+                      color: Color(0xFF3498DB),
                     ),
                   ),
                   const SizedBox(height: 30),
                   
                   const Text(
-                    'Welcome Back!',
+                    'Access Work',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Sign in to continue',
+                    'Empowering inclusive employment',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.8),
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withOpacity(0.9),
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -111,10 +200,35 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
+                          // Error Message
+                          if (_errorMessage != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red.shade600),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: TextStyle(color: Colors.red.shade600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (_errorMessage != null) const SizedBox(height: 16),
+
                           // Email TextField
                           TextField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Email',
                               prefixIcon: const Icon(Icons.email),
@@ -129,6 +243,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                           TextField(
                             controller: _passwordController,
                             obscureText: true,
+                            enabled: !_isLoading,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: const Icon(Icons.lock),
@@ -144,29 +259,32 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Navigate to home page
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomePage(),
-                                  ),
-                                );
-                              },
+                              onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade800,
+                                backgroundColor: const Color(0xFF3498DB),
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                'Login',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Login',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
                             ),
                           ),
 
@@ -177,10 +295,11 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                               // Handle forgot password
                               print('Forgot password');
                             },
-                            child: Text(
+                            child: const Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                color: Colors.blue.shade800,
+                                color: Color(0xFF3498DB),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
