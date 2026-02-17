@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signup.dart';
 import 'home.dart';
+import 'theme/app_colors.dart';
 
 
 void main() async {
@@ -20,11 +21,11 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Access Work',
       theme: ThemeData(
-        primaryColor: const Color(0xFF2C3E50),
+        primaryColor: AppColors.primary,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2C3E50),
-          primary: const Color(0xFF2C3E50),
-          secondary: const Color(0xFF3498DB),
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
         ),
         useMaterial3: true,
         fontFamily: 'Roboto',
@@ -135,8 +136,8 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF34495E),
-              Color(0xFF2C3E50),
+              AppColors.primaryDark,
+              AppColors.primary,
             ],
           ),
         ),
@@ -164,7 +165,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                     child: const Icon(
                       Icons.accessible_forward,
                       size: 60,
-                      color: Color(0xFF3498DB),
+                      color: AppColors.secondary,
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -261,7 +262,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF3498DB),
+                                backgroundColor: AppColors.secondary,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -298,7 +299,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                             child: const Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                color: Color(0xFF3498DB),
+                                color: AppColors.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'services/firebase_service.dart';
 import 'models/job_model.dart';
+import 'models/user_model.dart' show User;
 import 'profile.dart';
 import 'search.dart';
 import 'saved.dart';
+import 'theme/app_colors.dart';
+import 'widgets/save_job_button.dart';
+import 'widgets/profile_setup_checklist.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,7 +31,7 @@ class _HomePageState extends State<HomePage> {
             letterSpacing: 0.3,
           ),
         ),
-        backgroundColor: const Color(0xFF2C3E50),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -59,7 +63,7 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF3498DB),
+        backgroundColor: AppColors.secondary,
         foregroundColor: Colors.white,
         onPressed: () {
           _showMeetingOptions();
@@ -108,7 +112,7 @@ class _HomePageState extends State<HomePage> {
     required String label,
   }) {
     final isSelected = _currentIndex == index;
-    final color = isSelected ? const Color(0xFF3498DB) : Colors.grey.shade600;
+    final color = isSelected ? AppColors.secondary : Colors.grey.shade600;
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -150,7 +154,7 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.group_add, color: Color(0xFF3498DB)),
+                  leading: Icon(Icons.group_add, color: AppColors.secondary),
                   title: const Text('Join a meeting'),
                   subtitle: const Text('Enter a session code to join'),
                   onTap: () {
@@ -158,7 +162,7 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.video_call, color: Color(0xFF3498DB)),
+                  leading: Icon(Icons.video_call, color: AppColors.secondary),
                   title: const Text('Create a meeting'),
                   subtitle: const Text('Start a new session'),
                   onTap: () {
@@ -185,8 +189,8 @@ class _HomePageState extends State<HomePage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF2C3E50),
-                Color(0xFF34495E),
+                AppColors.primary,
+                AppColors.primaryDark,
               ],
             ),
           ),
@@ -223,6 +227,26 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Profile Setup Checklist
+                FutureBuilder<User?>(
+                  future: FirebaseService().getUser(auth.FirebaseAuth.instance.currentUser?.uid ?? ''),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data != null) {
+                      final user = snapshot.data!;
+                      final checklist = _getProfileChecklist(user);
+                      final isComplete = checklist.values.every((v) => v);
+                      
+                      // Only show if incomplete
+                      if (!isComplete) {
+                        return ProfileSetupChecklist(user: user);
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
                 // Categories Section
                 const Text(
                   'Job Categories',
@@ -462,91 +486,22 @@ class _HomePageState extends State<HomePage> {
       return Icon(Icons.bookmark_outline, color: Colors.grey.shade400);
     }
 
-    return _SaveButtonWidget(
+    return SaveJobButton(
       key: ValueKey('$currentUser-$jobId'),
       userId: currentUser.uid,
       jobId: jobId,
     );
   }
-}
 
-class _SaveButtonWidget extends StatefulWidget {
-  final String userId;
-  final String jobId;
-
-  const _SaveButtonWidget({required this.userId, required this.jobId, super.key});
-
-  @override
-  State<_SaveButtonWidget> createState() => _SaveButtonWidgetState();
-}
-
-class _SaveButtonWidgetState extends State<_SaveButtonWidget> with WidgetsBindingObserver {
-  bool _isSaved = false;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _loadSavedStatus();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _loadSavedStatus();
-    }
-  }
-
-  Future<void> _loadSavedStatus() async {
-    final saved = await FirebaseService().isJobSaved(widget.userId, widget.jobId);
-    if (mounted) {
-      setState(() {
-        _isSaved = saved;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(
-        _isSaved ? Icons.bookmark : Icons.bookmark_outline,
-        color: _isSaved ? const Color(0xFF3498DB) : Colors.grey.shade400,
-      ),
-      onPressed: _isLoading ? null : () async {
-        setState(() {
-          _isLoading = true;
-        });
-        
-        try {
-          if (_isSaved) {
-            await FirebaseService().removeSavedJob(widget.userId, widget.jobId);
-          } else {
-            await FirebaseService().saveJob(widget.userId, widget.jobId);
-          }
-          
-          if (mounted) {
-            setState(() {
-              _isSaved = !_isSaved;
-              _isLoading = false;
-            });
-          }
-        } catch (e) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-          print('Error toggling saved job: $e');
-        }
-      },
-    );
+  Map<String, bool> _getProfileChecklist(User user) {
+    return {
+      'Full name': user.name != null && user.name!.isNotEmpty,
+      'Email verified': true,
+      'Phone number': user.phone != null && user.phone!.isNotEmpty,
+      'Location': user.location != null && user.location!.isNotEmpty,
+      'Bio': user.bio != null && user.bio!.isNotEmpty,
+      'Skills': user.skills.isNotEmpty,
+      'Job preferences': user.preferences.isNotEmpty && user.preferences.values.any((v) => v),
+    };
   }
 }

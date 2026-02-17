@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'theme/app_colors.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -14,7 +15,7 @@ class SettingsPage extends StatelessWidget {
             letterSpacing: 0.3,
           ),
         ),
-        backgroundColor: const Color(0xFF2C3E50),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -85,7 +86,7 @@ class SettingsPage extends StatelessWidget {
   }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: const Color(0xFF3498DB)),
+      leading: Icon(icon, color: AppColors.secondary),
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
@@ -102,7 +103,7 @@ class SettingsPage extends StatelessWidget {
   }) {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
-      secondary: Icon(icon, color: const Color(0xFF3498DB)),
+      secondary: Icon(icon, color: AppColors.secondary),
       title: Text(title),
       subtitle: Text(subtitle),
       value: value,

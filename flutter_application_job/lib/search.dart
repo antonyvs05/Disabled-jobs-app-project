@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'services/firebase_service.dart';
 import 'models/job_model.dart';
+import 'theme/app_colors.dart';
+import 'widgets/save_job_button.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -36,8 +38,8 @@ class _SearchPageState extends State<SearchPage> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF2C3E50),
-                  Color(0xFF34495E),
+                  AppColors.primary,
+                  AppColors.primaryDark,
                 ],
               ),
             ),
@@ -88,7 +90,7 @@ class _SearchPageState extends State<SearchPage> {
                       },
                       decoration: InputDecoration(
                         hintText: 'Job title, keywords, or company...',
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF3498DB)),
+                        prefixIcon: Icon(Icons.search, color: AppColors.secondary),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
                                 icon: const Icon(Icons.clear, color: Colors.grey),
@@ -168,7 +170,7 @@ class _SearchPageState extends State<SearchPage> {
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : const Color(0xFF3498DB)),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.secondary),
             const SizedBox(width: 4),
             Text(label),
           ],
@@ -183,10 +185,10 @@ class _SearchPageState extends State<SearchPage> {
             }
           });
         },
-        selectedColor: const Color(0xFF3498DB),
-        backgroundColor: const Color(0xFFE8F4F8),
+        selectedColor: AppColors.secondary,
+        backgroundColor: AppColors.backgroundCard,
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : const Color(0xFF2C3E50),
+          color: isSelected ? Colors.white : AppColors.primary,
           fontWeight: FontWeight.w500,
         ),
         checkmarkColor: Colors.white,
@@ -345,7 +347,7 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildJobCard(Job job) {
     final icon = job.remote ? Icons.home_outlined : Icons.business_outlined;
-    final color = job.remote ? const Color(0xFF3498DB) : const Color(0xFF27AE60);
+    final color = job.remote ? AppColors.secondary : AppColors.accent;
     
     return Card(
       elevation: 2,
@@ -449,73 +451,8 @@ class _SearchPageState extends State<SearchPage> {
       return Icon(Icons.bookmark_outline, color: Colors.grey.shade400);
     }
 
-    return _SaveButtonWidget(userId: currentUser.uid, jobId: job.id);
+    return SaveJobButton(userId: currentUser.uid, jobId: job.id);
   }
 }
 
-class _SaveButtonWidget extends StatefulWidget {
-  final String userId;
-  final String jobId;
 
-  const _SaveButtonWidget({required this.userId, required this.jobId});
-
-  @override
-  State<_SaveButtonWidget> createState() => _SaveButtonWidgetState();
-}
-
-class _SaveButtonWidgetState extends State<_SaveButtonWidget> {
-  bool _isSaved = false;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedStatus();
-  }
-
-  Future<void> _loadSavedStatus() async {
-    final saved = await FirebaseService().isJobSaved(widget.userId, widget.jobId);
-    if (mounted) {
-      setState(() {
-        _isSaved = saved;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(
-        _isSaved ? Icons.bookmark : Icons.bookmark_outline,
-        color: _isSaved ? const Color(0xFF3498DB) : Colors.grey.shade400,
-      ),
-      onPressed: _isLoading ? null : () async {
-        setState(() {
-          _isLoading = true;
-        });
-        
-        try {
-          if (_isSaved) {
-            await FirebaseService().removeSavedJob(widget.userId, widget.jobId);
-          } else {
-            await FirebaseService().saveJob(widget.userId, widget.jobId);
-          }
-          
-          if (mounted) {
-            setState(() {
-              _isSaved = !_isSaved;
-              _isLoading = false;
-            });
-          }
-        } catch (e) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-          print('Error toggling saved job: $e');
-        }
-      },
-    );
-  }
-}

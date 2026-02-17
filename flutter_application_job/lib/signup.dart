@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'models/user_model.dart';
 import 'services/firebase_service.dart';
+import 'theme/app_colors.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -151,8 +152,8 @@ class _SignUpPageState extends State<SignUpPage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF34495E),
-              Color(0xFF2C3E50),
+              AppColors.primaryDark,
+              AppColors.primary,
             ],
           ),
         ),
@@ -180,7 +181,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: const Icon(
                       Icons.accessible_forward,
                       size: 60,
-                      color: Color(0xFF3498DB),
+                      color: AppColors.secondary,
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -364,7 +365,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _handleSignUp,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF3498DB),
+                                backgroundColor: AppColors.secondary,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(

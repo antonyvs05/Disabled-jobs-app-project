@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'models/user_model.dart' as um;
 import 'services/firebase_service.dart';
+import 'theme/app_colors.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -110,7 +111,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully'),
-            backgroundColor: Color(0xFF27AE60),
+            backgroundColor: AppColors.accent,
             duration: Duration(seconds: 2),
           ),
         );
@@ -184,7 +185,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             'Edit Profile',
             style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.3),
           ),
-          backgroundColor: const Color(0xFF2C3E50),
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
         ),
@@ -198,7 +199,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           'Edit Profile',
           style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.3),
         ),
-        backgroundColor: const Color(0xFF2C3E50),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -271,7 +272,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: ElevatedButton(
                       onPressed: _addSkill,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3498DB),
+                        backgroundColor: AppColors.secondary,
                       ),
                       child: const Icon(Icons.add, color: Colors.white),
                     ),
@@ -286,7 +287,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     .map((skill) => Chip(
                           label: Text(skill),
                           onDeleted: () => _removeSkill(skill),
-                          backgroundColor: const Color(0xFF3498DB),
+                          backgroundColor: AppColors.secondary,
                           labelStyle: const TextStyle(color: Colors.white),
                           deleteIconColor: Colors.white,
                         ))
@@ -327,7 +328,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3498DB),
+                    backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -390,7 +391,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF2C3E50),
+        color: AppColors.primary,
       ),
     );
   }

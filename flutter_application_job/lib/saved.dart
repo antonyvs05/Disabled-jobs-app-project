@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'services/firebase_service.dart';
 import 'models/job_model.dart';
+import 'theme/app_colors.dart';
 
 class SavedPage extends StatelessWidget {
   const SavedPage({super.key});
@@ -39,8 +40,8 @@ class SavedPage extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF2C3E50),
-                  Color(0xFF34495E),
+                  AppColors.primary,
+                  AppColors.primaryDark,
                 ],
               ),
             ),
@@ -126,7 +127,7 @@ class SavedPage extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final job = jobs[index];
                     final icon = job.remote ? Icons.home_outlined : Icons.business_outlined;
-                    final color = job.remote ? const Color(0xFF3498DB) : const Color(0xFF27AE60);
+                    final color = job.remote ? AppColors.secondary : AppColors.accent;
 
                     return Card(
                       elevation: 2,
@@ -157,7 +158,7 @@ class SavedPage extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2C3E50),
+                                      color: AppColors.primary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -189,7 +190,7 @@ class SavedPage extends StatelessWidget {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.bookmark, color: Color(0xFF3498DB)),
+                              icon: Icon(Icons.bookmark, color: AppColors.secondary),
                               onPressed: () async {
                                 await FirebaseService()
                                     .removeSavedJob(currentUser.uid, job.id);

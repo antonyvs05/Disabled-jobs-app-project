@@ -5,6 +5,7 @@ import 'edit_profile.dart';
 import 'settings.dart';
 import 'services/firebase_service.dart';
 import 'main.dart';
+import 'theme/app_colors.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -67,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Profile'),
-          backgroundColor: const Color(0xFF2C3E50),
+          backgroundColor: AppColors.primary,
         ),
         body: Center(
           child: Text(_errorMessage ?? 'Unknown error'),
@@ -84,7 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
             letterSpacing: 0.3,
           ),
         ),
-        backgroundColor: const Color(0xFF2C3E50),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -150,8 +151,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF2C3E50),
-                    Color(0xFF34495E),
+                    AppColors.primary,
+                    AppColors.primaryDark,
                   ],
                 ),
               ),
@@ -170,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Icon(
                         Icons.person,
                         size: 50,
-                        color: Color(0xFF3498DB),
+                        color: AppColors.secondary,
                       ),
                     ),
                   ),
@@ -263,9 +264,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: currentUser.skills.map((skill) {
                                 return Chip(
                                   label: Text(skill),
-                                  backgroundColor: const Color(0xFFE8F4F8),
+                                  backgroundColor: AppColors.backgroundCard,
                                   labelStyle: const TextStyle(
-                                    color: Color(0xFF2C3E50),
+                                    color: AppColors.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 );
@@ -294,7 +295,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       const Icon(
                                         Icons.accessible,
                                         size: 20,
-                                        color: Color(0xFF3498DB),
+                                        color: AppColors.secondary,
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -329,9 +330,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   .map((entry) {
                                     return Chip(
                                       label: Text(entry.key),
-                                      backgroundColor: const Color(0xFFE8F4F8),
+                                      backgroundColor: AppColors.backgroundCard,
                                       labelStyle: const TextStyle(
-                                        color: Color(0xFF2C3E50),
+                                        color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     );
@@ -385,7 +386,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF3498DB)),
+      leading: Icon(icon, color: AppColors.secondary),
       title: Text(
         label,
         style: TextStyle(
